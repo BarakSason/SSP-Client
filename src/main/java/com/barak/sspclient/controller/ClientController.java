@@ -3,7 +3,9 @@ package com.barak.sspclient.controller;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
@@ -14,6 +16,10 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import com.barak.sspclient.model.FileData;
+
+import reactor.core.publisher.Mono;
+
 public class ClientController {
 	WebClient webClient = WebClient.create();
 
@@ -21,24 +27,18 @@ public class ClientController {
 		webClient = WebClient.builder().baseUrl(url).build();
 	}
 
-	public int create(String filePath, String remotePath) {
+	public int create(String filePath, String dirPath) {
 		File file = new File(filePath);
-		byte[] fileContent = null;
+		FileData fileData = null;
 		try {
-			fileContent = Files.readAllBytes(file.toPath());
+			fileData = new FileData(filePath, file.getName(), dirPath);
 		} catch (IOException e) {
-			return -1;
+			e.printStackTrace();
 		}
-
-		MultipartBodyBuilder builder = new MultipartBodyBuilder();
-		String header = "form-data; name=file; filename=" + file.getName() + ";";
-		builder.part("uploadfile", new ByteArrayResource(fileContent)).header("Content-Disposition", header);
-		builder.part("dirPath", remotePath);
 
 		String response = null;
 		try {
-			response = webClient.post().uri("http://localhost:8080/create").contentType(MediaType.MULTIPART_FORM_DATA)
-					.body(BodyInserters.fromMultipartData(builder.build())).retrieve().bodyToMono(String.class).block();
+			response = webClient.post().uri("create").bodyValue(fileData).retrieve().bodyToMono(String.class).block();
 		} catch (WebClientResponseException e) {
 			System.out.println("Error " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
 			return -1;
@@ -49,13 +49,15 @@ public class ClientController {
 	}
 
 	// TODO: for debugging only
+	@SuppressWarnings("unchecked")
 	public int listall() {
-		LinkedList<String> entries = webClient.get().uri("http://localhost:8080/listall").retrieve()
+		LinkedList<String> entriesData = webClient.get().uri("http://localhost:8080/listall").retrieve()
 				.bodyToMono(LinkedList.class).block();
 
 		StringBuilder sb = new StringBuilder();
 		sb.append("Files:\n");
-		for (String entry : entries) {
+
+		for (Object entry : entriesData) {
 			sb.append(entry + "\n");
 		}
 
@@ -70,8 +72,9 @@ public class ClientController {
 		bodyValues.add("dirPath", dirPath);
 
 		try {
-			response = webClient.post().uri("http://localhost:8080/mkdir").contentType(MediaType.TEXT_PLAIN)
-					.body(BodyInserters.fromFormData(bodyValues)).retrieve().bodyToMono(String.class).block();
+			response = webClient.post()
+					.uri(uriBuilder -> uriBuilder.path("/mkdir").queryParam("dirPath", dirPath).build()).retrieve()
+					.bodyToMono(String.class).block();
 		} catch (WebClientResponseException e) {
 			System.out.println("Error " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
 			return -1;
@@ -83,11 +86,12 @@ public class ClientController {
 
 	@SuppressWarnings("unchecked")
 	public int ls(String dirPath) {
-		LinkedList<String> entries = null;
+		LinkedList<String> entriesData = null;
 
 		try {
-			entries = webClient.get().uri(uriBuilder -> uriBuilder.path("/ls").queryParam("dirPath", dirPath).build())
-					.retrieve().bodyToMono(LinkedList.class).block();
+			entriesData = webClient.get()
+					.uri(uriBuilder -> uriBuilder.path("/ls").queryParam("dirPath", dirPath).build()).retrieve()
+					.bodyToMono(LinkedList.class).block();
 
 		} catch (WebClientResponseException e) {
 			System.out.println("Error " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
@@ -96,7 +100,7 @@ public class ClientController {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append("Files:\n");
-		for (String entry : entries) {
+		for (String entry : entriesData) {
 			sb.append(entry + "\n");
 		}
 
