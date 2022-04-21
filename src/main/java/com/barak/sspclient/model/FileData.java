@@ -5,16 +5,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-import org.springframework.data.annotation.Id;
-
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 public class FileData {
-	@Id
-	private String id;
 	private String fileName;
 	private String dirPath;
 	private byte[] fileContent = null;
@@ -29,7 +25,5 @@ public class FileData {
 		} catch (IOException e) {
 			throw e;
 		}
-
-		id = String.valueOf(this.hashCode());
 	}
 }

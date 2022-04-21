@@ -57,14 +57,24 @@ public class SSP_Client {
 		}
 
 		/* List all created file and verify each exist */
-		// TODO: fix return value of ls
-		client.ls(dirPath);
+		LinkedList<String> files = client.ls(dirPath);
+		Iterator<String> filesIt = files.iterator();
 
 		/* Delete files on mountpoint */
 		Iterator<TestFileInfo> it = testFileInfoList.iterator();
 		while (it.hasNext()) {
 			TestFileInfo testFileInfo = it.next();
-			client.rm(testFileInfo.getDirPath(), testFileInfo.getFileName());
+			if (filesIt.hasNext()) {
+				String curFileName = filesIt.next();
+				if (curFileName.equals(testFileInfo.getFileName())) {
+					client.rm(testFileInfo.getDirPath(), testFileInfo.getFileName());
+				} else {
+					System.out.println("Error no match found for " + testFileInfo.getFileName());
+				}
+			} else {
+				System.out.println("Error no match found for " + testFileInfo.getFileName());
+			}
+
 			it.remove();
 		}
 
@@ -84,14 +94,24 @@ public class SSP_Client {
 		}
 
 		/* List all created file and verify each exist */
-		// TODO: fix return value of ls
-		client.ls(dirPath);
+		files = client.ls(dirPath);
+		filesIt = files.iterator();
 
 		/* Delete files from a dir under mountpoint */
 		it = testFileInfoList.iterator();
 		while (it.hasNext()) {
 			TestFileInfo testFileInfo = it.next();
-			client.rm(testFileInfo.getDirPath(), testFileInfo.getFileName());
+			if (filesIt.hasNext()) {
+				String curFileName = filesIt.next();
+				if (curFileName.equals(testFileInfo.getFileName())) {
+					client.rm(testFileInfo.getDirPath(), testFileInfo.getFileName());
+				} else {
+					System.out.println("Error no match found for " + testFileInfo.getFileName());
+				}
+			} else {
+				System.out.println("Error no match found for " + testFileInfo.getFileName());
+			}
+
 			it.remove();
 		}
 

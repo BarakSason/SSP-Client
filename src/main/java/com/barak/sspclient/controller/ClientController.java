@@ -51,14 +51,14 @@ public class ClientController {
 	// TODO: for debugging only
 	@SuppressWarnings("unchecked")
 	public int listall() {
-		LinkedList<String> entriesData = webClient.get().uri("http://localhost:8080/listall").retrieve()
+		LinkedList<String> files = webClient.get().uri("http://localhost:8080/listall").retrieve()
 				.bodyToMono(LinkedList.class).block();
 
 		StringBuilder sb = new StringBuilder();
 		sb.append("Files:\n");
 
-		for (Object entry : entriesData) {
-			sb.append(entry + "\n");
+		for (Object file : files) {
+			sb.append(file + "\n");
 		}
 
 		System.out.println(sb.toString());
@@ -85,27 +85,28 @@ public class ClientController {
 	}
 
 	@SuppressWarnings("unchecked")
-	public int ls(String dirPath) {
-		LinkedList<String> entriesData = null;
+	public LinkedList<String> ls(String dirPath) {
+		LinkedList<String> files = null;
 
 		try {
-			entriesData = webClient.get()
+			files = webClient.get()
 					.uri(uriBuilder -> uriBuilder.path("/ls").queryParam("dirPath", dirPath).build()).retrieve()
 					.bodyToMono(LinkedList.class).block();
 
 		} catch (WebClientResponseException e) {
 			System.out.println("Error " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
-			return -1;
+			return null;
 		}
 
+		// TODO: for debug only
 		StringBuilder sb = new StringBuilder();
 		sb.append("Files:\n");
-		for (String entry : entriesData) {
-			sb.append(entry + "\n");
+		for (String file : files) {
+			sb.append(file + "\n");
 		}
-
 		System.out.println(sb.toString());
-		return 0;
+
+		return files;
 	}
 
 	public int rm(String dirPath, String fileName) {
