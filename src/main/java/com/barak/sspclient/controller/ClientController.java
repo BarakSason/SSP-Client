@@ -2,23 +2,14 @@ package com.barak.sspclient.controller;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.MediaType;
-import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import com.barak.sspclient.model.FileData;
-
-import reactor.core.publisher.Mono;
 
 public class ClientController {
 	WebClient webClient = WebClient.create();
@@ -102,7 +93,7 @@ public class ClientController {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Files:\n");
 		for (String file : files) {
-			sb.append(file + "\n");
+			sb.append(dirPath + file + "\n");
 		}
 		System.out.println(sb.toString());
 

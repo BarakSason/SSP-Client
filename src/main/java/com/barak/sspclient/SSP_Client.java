@@ -1,11 +1,5 @@
 package com.barak.sspclient;
 
-import com.barak.sspclient.controller.ClientController;
-
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,6 +9,12 @@ import java.nio.file.StandardOpenOption;
 import java.security.SecureRandom;
 import java.util.Iterator;
 import java.util.LinkedList;
+
+import com.barak.sspclient.controller.ClientController;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 public class SSP_Client {
 	static final String chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -26,6 +26,7 @@ public class SSP_Client {
 	private static class TestFileInfo {
 		private String fileName;
 		private String dirPath;
+		private String filePath;
 	}
 
 	public static void main(String[] args) throws IOException {
@@ -53,7 +54,7 @@ public class SSP_Client {
 			Files.write(fullPath, fileContent, StandardOpenOption.CREATE_NEW);
 
 			client.create(filePath, dirPath);
-			testFileInfoList.add(new TestFileInfo(fileName, dirPath));
+			testFileInfoList.add(new TestFileInfo(fileName, dirPath, filePath));
 		}
 
 		/* List all created file and verify each exist */
@@ -61,9 +62,7 @@ public class SSP_Client {
 		Iterator<String> filesIt = files.iterator();
 
 		/* Delete files on mountpoint */
-		Iterator<TestFileInfo> it = testFileInfoList.iterator();
-		while (it.hasNext()) {
-			TestFileInfo testFileInfo = it.next();
+		for (TestFileInfo testFileInfo : testFileInfoList) {
 			if (filesIt.hasNext()) {
 				String curFileName = filesIt.next();
 				if (curFileName.equals(testFileInfo.getFileName())) {
@@ -74,23 +73,14 @@ public class SSP_Client {
 			} else {
 				System.out.println("Error no match found for " + testFileInfo.getFileName());
 			}
-
-			it.remove();
 		}
 
 		/* Create files on a dir under mountpoint */
 		dirPath = File.separator + randomString(10) + File.separator;
 		client.mkdir(dirPath);
-		for (int i = 0; i < 10; ++i) {
-			fileName = randomString(10);
-			filePath = "/home/barak/files/" + fileName;
-
-			file = new File(filePath);
-			Path fullPath = Paths.get(filePath);
-			Files.write(fullPath, fileContent, StandardOpenOption.CREATE_NEW);
-
-			client.create(filePath, dirPath);
-			testFileInfoList.add(new TestFileInfo(fileName, dirPath));
+		for (TestFileInfo testFileInfo : testFileInfoList) {
+			testFileInfo.setDirPath(dirPath);
+			client.create(testFileInfo.getFilePath(), dirPath);
 		}
 
 		/* List all created file and verify each exist */
@@ -98,9 +88,7 @@ public class SSP_Client {
 		filesIt = files.iterator();
 
 		/* Delete files from a dir under mountpoint */
-		it = testFileInfoList.iterator();
-		while (it.hasNext()) {
-			TestFileInfo testFileInfo = it.next();
+		for (TestFileInfo testFileInfo : testFileInfoList) {
 			if (filesIt.hasNext()) {
 				String curFileName = filesIt.next();
 				if (curFileName.equals(testFileInfo.getFileName())) {
@@ -111,14 +99,19 @@ public class SSP_Client {
 			} else {
 				System.out.println("Error no match found for " + testFileInfo.getFileName());
 			}
-
-			it.remove();
 		}
 
 		/* Delete dir under mountpoint */
 		client.rm(dirPath, "");
 
 		client.listall();
+
+		/* Delete test files */
+		Iterator<TestFileInfo> it = testFileInfoList.iterator();
+		while (it.hasNext()) {
+			file = new File(it.next().getFilePath());
+			file.delete();
+		}
 	}
 
 	private static String randomString(int len) {
