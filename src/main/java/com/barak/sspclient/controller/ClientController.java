@@ -2,8 +2,15 @@ package com.barak.sspclient.controller;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.LinkedList;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -80,9 +87,8 @@ public class ClientController {
 		LinkedList<String> files = null;
 
 		try {
-			files = webClient.get()
-					.uri(uriBuilder -> uriBuilder.path("/ls").queryParam("dirPath", dirPath).build()).retrieve()
-					.bodyToMono(LinkedList.class).block();
+			files = webClient.get().uri(uriBuilder -> uriBuilder.path("/ls").queryParam("dirPath", dirPath).build())
+					.retrieve().bodyToMono(LinkedList.class).block();
 
 		} catch (WebClientResponseException e) {
 			System.out.println("Error " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
@@ -113,6 +119,33 @@ public class ClientController {
 		}
 
 		System.out.println(response);
+		return 0;
+	}
+
+	public int download(String filePath, String localPath) {
+		byte[] response = null;
+
+		try {
+			response = webClient.get()
+					.uri(uriBuilder -> uriBuilder.path("/download").queryParam("filePath", filePath).build()).retrieve()
+					.bodyToMono(byte[].class).block();
+
+		} catch (WebClientResponseException e) {
+			System.out.println("Error " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+			return -1;
+		}
+
+		Path fullPath = Paths.get(localPath);
+		try {
+			Files.write(fullPath, response, StandardOpenOption.CREATE_NEW);
+		} catch (FileAlreadyExistsException e) {
+			System.out.println("File already exist " + localPath);
+		} catch (IOException e) {
+			System.out.println("Error creating file " + e.toString());
+			e.printStackTrace();
+		}
+
+		System.out.println("Successfully downloaded " + filePath);
 		return 0;
 	}
 }

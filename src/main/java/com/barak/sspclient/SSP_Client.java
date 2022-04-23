@@ -6,9 +6,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.security.SecureRandom;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Random;
 
 import com.barak.sspclient.controller.ClientController;
 
@@ -17,8 +17,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class SSP_Client {
-	static final String chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-	static SecureRandom rnd = new SecureRandom();
+	private static final String chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+	private static final Random rnd = new Random();
+	private static final String downloadPath = "/home/barak/downloads/";
 
 	@Getter
 	@Setter
@@ -32,13 +33,9 @@ public class SSP_Client {
 	public static void main(String[] args) throws IOException {
 		ClientController client = new ClientController("http://localhost:8080");
 
-		File file = new File("/home/barak/aaa.txt");
+		File file = new File("/home/barak/TestFile");
 		byte[] fileContent;
-		try {
-			fileContent = Files.readAllBytes(file.toPath());
-		} catch (IOException e) {
-			throw e;
-		}
+		fileContent = Files.readAllBytes(file.toPath());
 
 		/* Create files on mountpoint */
 		String fileName;
@@ -55,6 +52,16 @@ public class SSP_Client {
 
 			client.create(filePath, dirPath);
 			testFileInfoList.add(new TestFileInfo(fileName, dirPath, filePath));
+		}
+
+		/* Download all uploaded files for verification. Delete downloaded files. */
+		for (TestFileInfo testFileInfo : testFileInfoList) {
+			if (client.download(testFileInfo.getDirPath() + testFileInfo.getFileName(),
+					downloadPath + testFileInfo.getFileName()) != 0) {
+				System.out.println("Failed downloading " + testFileInfo.getFileName());
+			}
+			file = new File(downloadPath + testFileInfo.getFileName());
+			file.delete();
 		}
 
 		/* List all created file and verify each exist */
@@ -81,6 +88,16 @@ public class SSP_Client {
 		for (TestFileInfo testFileInfo : testFileInfoList) {
 			testFileInfo.setDirPath(dirPath);
 			client.create(testFileInfo.getFilePath(), dirPath);
+		}
+
+		/* Download all uploaded files for verification. Delete downloaded files. */
+		for (TestFileInfo testFileInfo : testFileInfoList) {
+			if (client.download(testFileInfo.getDirPath() + testFileInfo.getFileName(),
+					downloadPath + testFileInfo.getFileName()) != 0) {
+				System.out.println("Failed downloading " + testFileInfo.getFileName());
+			}
+			file = new File(downloadPath + testFileInfo.getFileName());
+			file.delete();
 		}
 
 		/* List all created file and verify each exist */
@@ -116,8 +133,10 @@ public class SSP_Client {
 
 	private static String randomString(int len) {
 		StringBuilder sb = new StringBuilder(len);
-		for (int i = 0; i < len; i++)
+		for (int i = 0; i < len; i++) {
 			sb.append(chars.charAt(rnd.nextInt(chars.length())));
+		}
+
 		return sb.toString();
 	}
 }
