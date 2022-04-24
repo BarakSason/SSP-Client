@@ -19,7 +19,6 @@ import lombok.Setter;
 public class SSP_Client {
 	private static final String chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 	private static final Random rnd = new Random();
-	private static final String downloadPath = "/home/barak/downloads/";
 
 	@Getter
 	@Setter
@@ -31,9 +30,19 @@ public class SSP_Client {
 	}
 
 	public static void main(String[] args) throws IOException {
+		if (args.length != 3) {
+			System.out.println("Provide path for a test file");
+			System.out.println("Provide path to for file generation");
+			System.out.println("Provide path for downloads");
+			System.exit(0);
+		}
+
+		String testFilePath = args[0];
+		String filesDir = args[1];
+		String downloadPath = args[2];
 		ClientController client = new ClientController("http://localhost:8080");
 
-		File file = new File("/home/barak/TestFile");
+		File file = new File(testFilePath);
 		byte[] fileContent;
 		fileContent = Files.readAllBytes(file.toPath());
 
@@ -44,7 +53,7 @@ public class SSP_Client {
 		LinkedList<TestFileInfo> testFileInfoList = new LinkedList<TestFileInfo>();
 		for (int i = 0; i < 10; ++i) {
 			fileName = randomString(10);
-			filePath = "/home/barak/files/" + fileName;
+			filePath = filesDir + fileName;
 
 			file = new File(filePath);
 			Path fullPath = Paths.get(filePath);
@@ -121,6 +130,7 @@ public class SSP_Client {
 		/* Delete dir under mountpoint */
 		client.rm(dirPath, "");
 
+		/* List all files (for debug) */
 		client.listall();
 
 		/* Delete test files */
